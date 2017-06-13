@@ -1,49 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_height="match_parent">
 
-    <include layout="@layout/toolbar" />
-
-    <android.support.v4.widget.NestedScrollView
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    <android.support.design.widget.CoordinatorLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_above="@+id/adView">
 
-        <LinearLayout
-            android:id="@+id/linearLayout1"
+        <include layout="@layout/toolbar" />
+
+        <android.support.v4.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_alignParentTop="true"
-            android:orientation="vertical">
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-            <fragment
-                android:id="@+id/frag_list"
-                class="anuj.wifidirect.wifi.DeviceListFragment"
+            <LinearLayout
+                android:id="@+id/linearLayout1"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <!-- Preview: layout=@layout/row_devices -->
-            </fragment>
+                android:layout_height="match_parent"
+                android:layout_alignParentTop="true"
+                android:orientation="vertical">
 
-            <fragment
-                android:id="@+id/frag_detail"
-                class="anuj.wifidirect.wifi.DeviceDetailFragment"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <!-- Preview: layout=@layout/device_detail -->
-            </fragment>
-        </LinearLayout>
-    </android.support.v4.widget.NestedScrollView>
+                <fragment
+                    android:id="@+id/frag_list"
+                    class="anuj.wifidirect.wifi.DeviceListFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <!-- Preview: layout=@layout/row_devices -->
+                </fragment>
 
-    <!--<com.google.android.gms.ads.AdView
+                <fragment
+                    android:id="@+id/frag_detail"
+                    class="anuj.wifidirect.wifi.DeviceDetailFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <!-- Preview: layout=@layout/device_detail -->
+                </fragment>
+            </LinearLayout>
+        </android.support.v4.widget.NestedScrollView>
+
+    </android.support.design.widget.CoordinatorLayout>
+
+    <com.google.android.gms.ads.AdView
         android:id="@+id/adView"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.1"
-        android:layout_centerHorizontal="true"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
         ads:adSize="BANNER"
-        ads:adUnitId="@string/banner_ad_unit_id">
-    </com.google.android.gms.ads.AdView>-->
-</android.support.design.widget.CoordinatorLayout>
+        ads:adUnitId="@string/banner_ad_unit_id"></com.google.android.gms.ads.AdView>
+</RelativeLayout>

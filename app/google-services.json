@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "410001953158",
+    "firebase_url": "https://wifidirect-58fa2.firebaseio.com",
+    "project_id": "wifidirect-58fa2",
+    "storage_bucket": "wifidirect-58fa2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:410001953158:android:0de92ba4373dc233",
+        "android_client_info": {
+          "package_name": "anuj.wifidirect"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "410001953158-dfe6p14thguppctgfircut4oimppkc26.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtWA4IpcKkC5P0E3V2rJumRGBdE3fIdnA"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -20,7 +20,6 @@ public class WiFiTransferModal implements Serializable{
 	public WiFiTransferModal(String name, Long filelength){
 		this.FileName = name;
 		this.FileLength = filelength;
-//		this.FileData = in;
 	}
 	
 	public String getInetAddress() {

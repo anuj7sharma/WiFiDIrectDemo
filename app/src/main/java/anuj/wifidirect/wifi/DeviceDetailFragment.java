@@ -93,7 +93,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         mContentView = inflater.inflate(R.layout.device_detail, null);
 
         mInterstitialAd = new InterstitialAd(getActivity());
-        mInterstitialAd.setAdUnitId("ca-app-pub-6910223592682604/2198005177");
+        mInterstitialAd.setAdUnitId(getString(R.string.admob_appID));
 
         mInterstitialAd.setAdListener(new AdListener() {
             @Override
