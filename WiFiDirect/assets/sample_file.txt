@@ -1,3 +1,0 @@
-This is a sample text file for wifi_direct demo. 
-
-Once the devices are connected, the server i.e. groupOwner will listen for incoming connections and write this file. 
