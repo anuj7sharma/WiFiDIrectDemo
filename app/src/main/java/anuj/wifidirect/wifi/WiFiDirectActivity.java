@@ -104,7 +104,7 @@ public class WiFiDirectActivity extends AppCompatActivity implements ChannelList
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
         manager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
-        channel = manager.initialize(this, getMainLooper(), null);
+        channel = manager.initialize(this, getMainLooper(), this);
     }
 
 

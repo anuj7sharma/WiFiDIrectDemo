@@ -15,6 +15,7 @@ import android.os.Handler;
 import android.util.Log;
 
 import anuj.wifidirect.*;
+import anuj.wifidirect.beans.WiFiTransferModal;
 
 public class WiFiClientIPTransferService extends IntentService{
 

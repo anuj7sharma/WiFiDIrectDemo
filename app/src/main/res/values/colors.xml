@@ -6,4 +6,20 @@
 
     <color name="status_bar_color">#FF000000</color>
     <color name="layout_border_color">#FF111111</color>
+
+    <color name="splash_bg">#21271F</color>
+    <color name="app_textcolor_heading">#444444</color>
+    <color name="app_textcolor">#110F10</color>
+    <color name="app_hintcolor">#3e3e3e</color>
+    <color name="light_transpirant_black">#79666565</color>
+
+    <!-- Basic Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="light_gray">#d9d9d9</color>
+    <color name="dark_gray">#6a6869</color>
+    <color name="red">#d73f3f</color>
+    <color name="green">#94d60a</color>
+    <color name="transparent">#00fafafa</color>
+    <color name="disabled_color">#ABABAB</color>
 </resources>

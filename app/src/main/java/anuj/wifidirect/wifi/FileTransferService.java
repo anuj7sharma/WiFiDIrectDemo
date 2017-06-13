@@ -19,7 +19,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
-import anuj.wifidirect.*;
+import anuj.wifidirect.beans.WiFiTransferModal;
 
 /**
  * A service that process each file transfer request i.e Intent by opening a

@@ -31,8 +31,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.support.v4.BuildConfig;
 import android.support.v4.content.FileProvider;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -49,10 +49,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 import anuj.wifidirect.R;
+import anuj.wifidirect.beans.WiFiTransferModal;
 import anuj.wifidirect.utils.PermissionsAndroid;
 import anuj.wifidirect.utils.SharedPreferencesHandler;
 import anuj.wifidirect.utils.Utils;
@@ -109,7 +111,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
             @Override
             public void onClick(View v) {
                 WifiP2pConfig config = new WifiP2pConfig();
-                if (config != null) {
+                if (config != null && config.deviceAddress!=null && device!=null) {
                     config.deviceAddress = device.deviceAddress;
                     config.wps.setup = WpsInfo.PBC;
                     if (progressDialog != null && progressDialog.isShowing()) {
@@ -185,6 +187,11 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                 System.out.println("file name is   ::" + f.getName());
                 Long FileLength = f.length();
                 ActualFilelength = FileLength;
+
+                int i = f.getName().lastIndexOf('.');
+                if (i > 0) {
+                    String extension = f.getName().substring(i + 1);
+                }
                 try {
                     Extension = f.getName();
                     Log.e("Name of File-> ", "" + Extension);
@@ -204,8 +211,8 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
             Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
             serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
             serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
-    	        /*
-    	         * Choose on which device file has to send weather its server or client
+                /*
+                 * Choose on which device file has to send weather its server or client
     	         */
             String Ip = SharedPreferencesHandler.getStringValues(
                     getActivity(), getString(R.string.pref_WiFiClientIp));
@@ -221,7 +228,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                 if (ServerBool != null && !ServerBool.equals("") && ServerBool.equalsIgnoreCase("true")) {
 
                     //-----------------------------
-                    if (Ip != null && !Ip.equals("")) {
+                    if (TextUtils.isEmpty(Ip)) {
                         CommonMethods.e(
                                 "in if condition",
                                 "Sending data to " + Ip);
@@ -314,7 +321,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
             }
 
             if (info.groupFormed && info.isGroupOwner) {
-        	/*
+            /*
         	 * set shaerdprefrence which remember that device is server.
         	 */
                 SharedPreferencesHandler.setStringValues(getActivity(),
@@ -440,98 +447,109 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
             try {
                 CommonMethods.e("File Async task port", "File Async task port-> " + PORT);
                 // init handler for progressdialog
-                ServerSocket serverSocket = new ServerSocket(PORT);
+                ServerSocket serverSocket = new ServerSocket();
+                if(serverSocket.isBound()){
+                    serverSocket.setReuseAddress(true);
+                }
+                serverSocket.bind(new InetSocketAddress(PORT));
 
                 Log.d(CommonMethods.Tag, "Server: Socket opened");
                 Socket client = serverSocket.accept();
+
                 Utils.d("Client's InetAddresssss  ", "" + client.getInetAddress());
 
                 WiFiClientIp = client.getInetAddress().getHostAddress();
-
                 ObjectInputStream ois = new ObjectInputStream(
                         client.getInputStream());
                 WiFiTransferModal obj = null;
-                // obj = (WiFiTransferModal) ois.readObject();
                 String InetAddress;
                 try {
                     obj = (WiFiTransferModal) ois.readObject();
-                    InetAddress = obj.getInetAddress();
-                    if (InetAddress != null
-                            && InetAddress
-                            .equalsIgnoreCase(FileTransferService.inetaddress)) {
-                        CommonMethods.e("File Async Group Client Ip", "port-> "
-                                + WiFiClientIp);
-                        SharedPreferencesHandler.setStringValues(mFilecontext,
-                                mFilecontext.getString(R.string.pref_WiFiClientIp), WiFiClientIp);
-                        CommonMethods
-                                .e("File Async Group Client Ip from SHAREDPrefrence",
-                                        "port-> "
-                                                + SharedPreferencesHandler
-                                                .getStringValues(
-                                                        mFilecontext,
-                                                        mFilecontext.getString(R.string.pref_WiFiClientIp)));
-                        //set boolean true which identifiy that this device will act as server.
-                        SharedPreferencesHandler.setStringValues(mFilecontext,
-                                mFilecontext.getString(R.string.pref_ServerBoolean), "true");
-                        ois.close(); // close the ObjectOutputStream object
-                        // after saving
-                        serverSocket.close();
 
-                        return "Demo";
+                    if (obj != null) {
+                        InetAddress = obj.getInetAddress();
+                        if (InetAddress != null
+                                && InetAddress
+                                .equalsIgnoreCase(FileTransferService.inetaddress)) {
+                            CommonMethods.e("File Async Group Client Ip", "port-> "
+                                    + WiFiClientIp);
+                            SharedPreferencesHandler.setStringValues(mFilecontext,
+                                    mFilecontext.getString(R.string.pref_WiFiClientIp), WiFiClientIp);
+                            CommonMethods
+                                    .e("File Async Group Client Ip from SHAREDPrefrence",
+                                            "port-> "
+                                                    + SharedPreferencesHandler
+                                                    .getStringValues(
+                                                            mFilecontext,
+                                                            mFilecontext.getString(R.string.pref_WiFiClientIp)));
+                            //set boolean true which identifiy that this device will act as server.
+                            SharedPreferencesHandler.setStringValues(mFilecontext,
+                                    mFilecontext.getString(R.string.pref_ServerBoolean), "true");
+                            ois.close(); // close the ObjectOutputStream object
+                            // after saving
+                            serverSocket.close();
+
+                            return "Demo";
+                        }
+
+                        final Runnable r = new Runnable() {
+
+                            public void run() {
+                                // TODO Auto-generated method stub
+                                mProgressDialog.setMessage("Receiving...");
+                                mProgressDialog.setIndeterminate(false);
+                                mProgressDialog.setMax(100);
+                                mProgressDialog.setProgress(0);
+                                mProgressDialog.setProgressNumberFormat(null);
+                                mProgressDialog
+                                        .setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                                mProgressDialog.show();
+                            }
+                        };
+                        handler.post(r);
+                        Utils.d("FileName got from socket on other side->>> ",
+                                obj.getFileName());
                     }
-                } catch (ClassNotFoundException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-                final Runnable r = new Runnable() {
 
-                    public void run() {
-                        // TODO Auto-generated method stub
-                        mProgressDialog.setMessage("Receiving...");
-                        mProgressDialog.setIndeterminate(false);
-                        mProgressDialog.setMax(100);
-                        mProgressDialog.setProgress(0);
-                        mProgressDialog.setProgressNumberFormat(null);
-                        mProgressDialog
-                                .setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                        mProgressDialog.show();
-                    }
-                };
-                handler.post(r);
-                Utils.d("FileName got from socket on other side->>> ",
-                        obj.getFileName());
+                    final File f = new File(
+                            Environment.getExternalStorageDirectory() + "/"
+                                    + FolderName + "/"
+                                    + obj.getFileName());
 
-                final File f = new File(
-                        Environment.getExternalStorageDirectory() + "/"
-                                + FolderName + "/"
-                                + obj.getFileName());
+                    File dirs = new File(f.getParent());
+                    if (!dirs.exists())
+                        dirs.mkdirs();
+                    f.createNewFile();
 
-                File dirs = new File(f.getParent());
-                if (!dirs.exists())
-                    dirs.mkdirs();
-                f.createNewFile();
-				
 				/*
 				 * Recieve file length and copy after it
 				 */
-                this.ReceivedFileLength = obj.getFileLength();
+                    this.ReceivedFileLength = obj.getFileLength();
 
-                InputStream inputstream = client.getInputStream();
+                    InputStream inputstream = client.getInputStream();
 
 
-                copyRecievedFile(inputstream, new FileOutputStream(f),
-                        ReceivedFileLength);
-                ois.close(); // close the ObjectOutputStream object after saving
-                // file to storage.
-                serverSocket.close();
+                    copyRecievedFile(inputstream, new FileOutputStream(f),
+                            ReceivedFileLength);
+                    ois.close(); // close the ObjectOutputStream object after saving
+                    // file to storage.
+                    serverSocket.close();
 
 				/*
 				 * Set file related data and decrypt file in postExecute.
 				 */
-                this.Extension = obj.getFileName();
-                this.EncryptedFile = f;
+                    this.Extension = obj.getFileName();
+                    this.EncryptedFile = f;
+                    return f.getAbsolutePath();
 
-                return f.getAbsolutePath();
+                } catch (ClassNotFoundException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                return "";
             } catch (IOException e) {
                 Log.e(WiFiDirectActivity.TAG, e.getMessage());
                 return null;
@@ -563,7 +581,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                         intent.setDataAndType(Uri.parse("file://" + result), "image/*");
                     }
                     mFilecontext.startActivity(intent);
-                } else {
+                } else if (!TextUtils.isEmpty(result)) {
             		/*
 					 * To initiate socket again we are intiating async task
 					 * in this condition.
@@ -769,6 +787,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                 if (result.equalsIgnoreCase("success")) {
                     CommonMethods.e("On first Connect",
                             "On first Connect sent to asynctask");
+                    Utils.getInstance().showToast("on first connect");
                     ClientCheck = true;
                 }
             }
