@@ -16,7 +16,6 @@
 
 package anuj.wifidirect.wifi;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -37,10 +36,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
-import anuj.wifidirect.R;
 
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
+import anuj.wifidirect.R;
+import anuj.wifidirect.utils.PermissionsAndroid;
 
 /**
  * An activity that uses WiFi Direct APIs to discover and connect with available
@@ -73,9 +71,25 @@ public class WiFiDirectActivity extends AppCompatActivity implements ChannelList
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        
+        initViews();
+
+        checkStoragePermission();
+    }
+
+    /*
+      Ask permissions for Filestorage if device api > 23
+       */
+    //  @TargetApi(Build.VERSION_CODES.M)
+    private void checkStoragePermission() {
+        boolean isExternalStorage = PermissionsAndroid.getInstance().checkWriteExternalStoragePermission(this);
+        if (!isExternalStorage) {
+            PermissionsAndroid.getInstance().requestForWriteExternalStoragePermission(this);
+        }
+    }
+
+    private void initViews() {
         // add necessary intent values to be matched.
-        mToolbar = (Toolbar)findViewById(R.id.toolbar);
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
         getSupportActionBar().setTitle("WifiDirect");
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
@@ -87,8 +101,10 @@ public class WiFiDirectActivity extends AppCompatActivity implements ChannelList
         channel = manager.initialize(this, getMainLooper(), null);
     }
 
-   
-    /** register the BroadcastReceiver with the intent values to be matched */
+
+    /**
+     * register the BroadcastReceiver with the intent values to be matched
+     */
     @Override
     public void onResume() {
         super.onResume();
