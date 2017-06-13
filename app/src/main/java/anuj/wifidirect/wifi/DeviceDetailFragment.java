@@ -228,7 +228,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                 if (ServerBool != null && !ServerBool.equals("") && ServerBool.equalsIgnoreCase("true")) {
 
                     //-----------------------------
-                    if (TextUtils.isEmpty(Ip)) {
+                    if (!TextUtils.isEmpty(Ip)) {
                         CommonMethods.e(
                                 "in if condition",
                                 "Sending data to " + Ip);
@@ -411,6 +411,8 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                 getString(R.string.pref_ServerBoolean), "");
         SharedPreferencesHandler.setStringValues(getActivity(),
                 getString(R.string.pref_WiFiClientIp), "");
+
+        ClientCheck = false;
     }
 
     /**
@@ -448,9 +450,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                 CommonMethods.e("File Async task port", "File Async task port-> " + PORT);
                 // init handler for progressdialog
                 ServerSocket serverSocket = new ServerSocket();
-                if(serverSocket.isBound()){
-                    serverSocket.setReuseAddress(true);
-                }
+                serverSocket.setReuseAddress(true);
                 serverSocket.bind(new InetSocketAddress(PORT));
 
                 Log.d(CommonMethods.Tag, "Server: Socket opened");
@@ -787,7 +787,6 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                 if (result.equalsIgnoreCase("success")) {
                     CommonMethods.e("On first Connect",
                             "On first Connect sent to asynctask");
-                    Utils.getInstance().showToast("on first connect");
                     ClientCheck = true;
                 }
             }
