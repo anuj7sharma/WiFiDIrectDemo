@@ -617,8 +617,8 @@ public class DeviceDetailFragment extends android.support.v4.app.Fragment implem
         Uri uri = Uri.parse(stringUrl);
 
         Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         if (Build.VERSION.SDK_INT >= 24) {
-            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             Uri fileURI = FileProvider.getUriForFile(context,
                     anuj.wifidirect.BuildConfig.APPLICATION_ID + ".provider",
                     new File(stringUrl));
@@ -650,7 +650,7 @@ public class DeviceDetailFragment extends android.support.v4.app.Fragment implem
             intent.setDataAndType(uri, "image/gif");
         } else if (stringUrl.toString().contains(".jpg") || stringUrl.toString().contains(".jpeg") || stringUrl.toString().contains(".png")) {
             // JPG file
-            intent.setDataAndType(uri, "image/jpeg");
+            intent.setDataAndType(uri, "image/*");
         } else if (stringUrl.toString().contains(".txt")) {
             // Text file
             intent.setDataAndType(uri, "text/plain");
