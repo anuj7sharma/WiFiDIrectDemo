@@ -8,7 +8,7 @@
     <string name="pref_ServerBoolean">ServerBoolean</string>
 
     <!-- AdMob Ad ID-->
-    <string name="admob_appID">ca-app-pub-6910223592682604~9886351177</string>
+    <string name="fullscreen_ad_unit_id">ca-app-pub-6910223592682604/8991622777</string>
     <string name="banner_ad_unit_id">ca-app-pub-6910223592682604/2363084377</string>
 
     <string name="enable_p2p_button">P2P On/Off</string>

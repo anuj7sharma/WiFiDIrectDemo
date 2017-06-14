@@ -116,8 +116,7 @@ public class DeviceDetailFragment extends android.support.v4.app.Fragment implem
         mContentView = inflater.inflate(R.layout.device_detail, null);
 
         mInterstitialAd = new InterstitialAd(getActivity());
-        mInterstitialAd.setAdUnitId(getString(R.string.admob_appID));
-
+        mInterstitialAd.setAdUnitId(getString(R.string.fullscreen_ad_unit_id));
         mInterstitialAd.setAdListener(new AdListener() {
             @Override
             public void onAdClosed() {
@@ -159,14 +158,10 @@ public class DeviceDetailFragment extends android.support.v4.app.Fragment implem
 
         mContentView.findViewById(R.id.btn_start_client).setOnClickListener(
                 new View.OnClickListener() {
-
                     @Override
                     public void onClick(View v) {
                         // Allow user to pick an image from Gallery or other
                         // registered apps
-                        /*Intent intent = new Intent(Intent.ACTION_PICK);
-                        intent.setType("image*//*");
-                        startActivityForResult(intent, CHOOSE_FILE_RESULT_CODE);*/
                         checkExternalStoragePermission();
                     }
                 });
@@ -176,7 +171,6 @@ public class DeviceDetailFragment extends android.support.v4.app.Fragment implem
 
     private void requestNewInterstitial() {
         AdRequest adRequest = new AdRequest.Builder()
-                .addTestDevice("SEE_YOUR_LOGCAT_TO_GET_YOUR_DEVICE_ID")
                 .build();
 
         mInterstitialAd.loadAd(adRequest);
@@ -223,123 +217,6 @@ public class DeviceDetailFragment extends android.support.v4.app.Fragment implem
         if (resultCode == getActivity().RESULT_OK) {
             if (requestCode == Picker.PICK_FILE) {
                 filePicker.submit(data);
-            } else {
-
-
-                /*Uri uri = data.getData();
-                *//*
-                 * get actual file name and size of file, it will be send to socket and recieved at other device.
-    	         * File size help in displaying progress dialog actual progress.
-    	         *//*
-                String selectedfilePath = null;
-                try {
-                    selectedfilePath = CommonMethods.getPath(uri,
-                            getActivity());
-
-                    Utils.d("Original Selected File Path-> ", selectedfilePath);
-                } catch (Exception e) {
-                    // TODO: handle exception
-                    e.printStackTrace();
-                }
-                String Extension = "";
-                if (selectedfilePath != null) {
-                    File f = new File(selectedfilePath);
-                    System.out.println("file name is   ::" + f.getName());
-                    Long FileLength = f.length();
-                    ActualFilelength = FileLength;
-
-                    int i = f.getName().lastIndexOf('.');
-                    if (i > 0) {
-                        String extension = f.getName().substring(i + 1);
-                    }
-                    try {
-                        Extension = f.getName();
-                        Log.e("Name of File-> ", "" + Extension);
-                    } catch (Exception e) {
-                        // TODO: handle exception
-                        e.printStackTrace();
-                    }
-                } else {
-                    CommonMethods.e("", "path is null");
-                    return;
-                }*/
-
-
-                /*TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
-                statusText.setText("Sending: " + uri);
-                Log.d(WiFiDirectActivity.TAG, "Intent----------- " + uri);
-                Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
-                serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
-                serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
-                *//*
-                 * Choose on which device file has to send weather its server or client
-    	         *//*
-                String Ip = SharedPreferencesHandler.getStringValues(
-                        getActivity(), getString(R.string.pref_WiFiClientIp));
-                String OwnerIp = SharedPreferencesHandler.getStringValues(
-                        getActivity(), getString(R.string.pref_GroupOwnerAddress));
-                if (OwnerIp != null && OwnerIp.length() > 0) {
-                    CommonMethods.e("", "inside the check -- >");
-                    // if(!info.groupOwnerAddress.getHostAddress().equals(LocalIp)){
-                    String host = null;
-                    int sub_port = -1;
-
-                    String ServerBool = SharedPreferencesHandler.getStringValues(getActivity(), getString(R.string.pref_ServerBoolean));
-                    if (ServerBool != null && !ServerBool.equals("") && ServerBool.equalsIgnoreCase("true")) {
-
-                        //-----------------------------
-                        if (!TextUtils.isEmpty(Ip)) {
-                            CommonMethods.e(
-                                    "in if condition",
-                                    "Sending data to " + Ip);
-                            // Get Client Ip Address and send data
-                            host = Ip;
-                            sub_port = FileTransferService.PORT;
-                            serviceIntent
-                                    .putExtra(
-                                            FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
-                                            Ip);
-                        }
-
-
-                    } else {
-                        CommonMethods.e(
-                                "in else condition",
-                                "Sending data to " + OwnerIp);
-
-                        FileTransferService.PORT = 8888;
-
-                        host = OwnerIp;
-                        sub_port = FileTransferService.PORT;
-                        serviceIntent
-                                .putExtra(
-                                        FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
-                                        OwnerIp);
-                    }
-
-
-                    serviceIntent.putExtra(FileTransferService.Extension, Extension);
-
-                    serviceIntent.putExtra(FileTransferService.Filelength,
-                            ActualFilelength + "");
-                    serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, FileTransferService.PORT);
-                    if (host != null && sub_port != -1) {
-                        CommonMethods.e("Going to intiate service", "service intent for initiating transfer");
-                        showprogress("Sending...");
-                        getActivity().startService(serviceIntent);
-                    } else {
-                        CommonMethods.DisplayToast(getActivity(),
-                                "Host Address not found, Please Re-Connect");
-                        DismissProgressDialog();
-                    }
-
-                } else {
-                    DismissProgressDialog();
-                    CommonMethods.DisplayToast(getActivity(),
-                            "Host Address not found, Please Re-Connect");
-                }*/
-
-
             }
         } else {
             CommonMethods.DisplayToast(getActivity(), "Cancelled Request");
