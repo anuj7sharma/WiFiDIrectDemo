@@ -15,7 +15,7 @@
     <string name="discover_peers_button">Discover</string>
     <string name="connect_peer_button">Connect</string>
     <string name="disconnect_peer_button">Disconnect</string>
-    <string name="get_file_button">Launch Gallery</string>
+    <string name="get_file_button">Choose File</string>
     <string name="empty"></string>
     <string name="yes">yes</string>
     <string name="no">no</string>

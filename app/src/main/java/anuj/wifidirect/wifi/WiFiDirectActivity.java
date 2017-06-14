@@ -28,6 +28,7 @@ import android.net.wifi.p2p.WifiP2pManager.Channel;
 import android.net.wifi.p2p.WifiP2pManager.ChannelListener;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -39,6 +40,8 @@ import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+
+import java.util.List;
 
 import anuj.wifidirect.R;
 import anuj.wifidirect.utils.PermissionsAndroid;
@@ -131,7 +134,7 @@ public class WiFiDirectActivity extends AppCompatActivity implements ChannelList
     public void resetData() {
         DeviceListFragment fragmentList = (DeviceListFragment) getFragmentManager()
                 .findFragmentById(R.id.frag_list);
-        DeviceDetailFragment fragmentDetails = (DeviceDetailFragment) getFragmentManager()
+        DeviceDetailFragment fragmentDetails = (DeviceDetailFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.frag_detail);
         if (fragmentList != null) {
             fragmentList.clearPeers();
@@ -199,7 +202,7 @@ public class WiFiDirectActivity extends AppCompatActivity implements ChannelList
 
     @Override
     public void showDetails(WifiP2pDevice device) {
-        DeviceDetailFragment fragment = (DeviceDetailFragment) getFragmentManager()
+        DeviceDetailFragment fragment = (DeviceDetailFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.frag_detail);
         fragment.showDetails(device);
 
@@ -224,7 +227,7 @@ public class WiFiDirectActivity extends AppCompatActivity implements ChannelList
 
     @Override
     public void disconnect() {
-        final DeviceDetailFragment fragment = (DeviceDetailFragment) getFragmentManager()
+        final DeviceDetailFragment fragment = (DeviceDetailFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.frag_detail);
         fragment.resetViews();
         manager.removeGroup(channel, new ActionListener() {
@@ -293,5 +296,21 @@ public class WiFiDirectActivity extends AppCompatActivity implements ChannelList
             }
         }
 
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        List<Fragment> listOfFragments = getSupportFragmentManager().getFragments();
+
+        if(listOfFragments.size()>=1){
+            for (Fragment fragment : listOfFragments) {
+                if(fragment instanceof DeviceDetailFragment){
+                    fragment.onActivityResult(requestCode, resultCode, data);
+                }
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+//        (getSupportFragmentManager().findFragmentById(R.id.device_detail_container)).
+//                onActivityResult(requestCode,resultCode,data);
     }
 }

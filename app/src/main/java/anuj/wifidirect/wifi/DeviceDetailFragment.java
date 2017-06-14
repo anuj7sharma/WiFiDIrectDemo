@@ -16,10 +16,10 @@
 
 package anuj.wifidirect.wifi;
 
-import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
@@ -31,6 +31,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
 import android.text.TextUtils;
 import android.util.Log;
@@ -42,6 +43,10 @@ import android.widget.TextView;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
+import com.kbeanie.multipicker.api.FilePicker;
+import com.kbeanie.multipicker.api.Picker;
+import com.kbeanie.multipicker.api.callbacks.FilePickerCallback;
+import com.kbeanie.multipicker.api.entity.ChosenFile;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -52,6 +57,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
 
 import anuj.wifidirect.R;
 import anuj.wifidirect.beans.WiFiTransferModal;
@@ -60,11 +66,13 @@ import anuj.wifidirect.utils.SharedPreferencesHandler;
 import anuj.wifidirect.utils.Utils;
 import anuj.wifidirect.wifi.DeviceListFragment.DeviceActionListener;
 
+import static anuj.wifidirect.utils.PermissionsAndroid.WRITE_EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE;
+
 /**
  * A fragment that manages a particular peer and allows interaction with device
  * i.e. setting up network connection and transferring data.
  */
-public class DeviceDetailFragment extends Fragment implements ConnectionInfoListener {
+public class DeviceDetailFragment extends android.support.v4.app.Fragment implements ConnectionInfoListener, FilePickerCallback {
 
     static InterstitialAd mInterstitialAd;
 
@@ -84,9 +92,22 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
     static int Percentage = 0;
     public static String FolderName = "WiFiDirectDemo";
 
+    private FilePicker filePicker;
+    private String pickerPath;
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        if (savedInstanceState != null) {
+            if (savedInstanceState.containsKey("picker_path")) {
+                pickerPath = savedInstanceState.getString("picker_path");
+            }
+        }
     }
 
     @Override
@@ -111,7 +132,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
             @Override
             public void onClick(View v) {
                 WifiP2pConfig config = new WifiP2pConfig();
-                if (config != null && config.deviceAddress!=null && device!=null) {
+                if (config != null && config.deviceAddress != null && device != null) {
                     config.deviceAddress = device.deviceAddress;
                     config.wps.setup = WpsInfo.PBC;
                     if (progressDialog != null && progressDialog.isShowing()) {
@@ -143,9 +164,10 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                     public void onClick(View v) {
                         // Allow user to pick an image from Gallery or other
                         // registered apps
-                        Intent intent = new Intent(Intent.ACTION_PICK);
-                        intent.setType("image/*");
-                        startActivityForResult(intent, CHOOSE_FILE_RESULT_CODE);
+                        /*Intent intent = new Intent(Intent.ACTION_PICK);
+                        intent.setType("image*//*");
+                        startActivityForResult(intent, CHOOSE_FILE_RESULT_CODE);*/
+                        checkExternalStoragePermission();
                     }
                 });
 
@@ -160,123 +182,164 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         mInterstitialAd.loadAd(adRequest);
     }
 
+    private void checkExternalStoragePermission() {
+        boolean isExternalStorage = PermissionsAndroid.getInstance().checkWriteExternalStoragePermission(getActivity());
+        if (!isExternalStorage) {
+            PermissionsAndroid.getInstance().requestForWriteExternalStoragePermission(getActivity());
+        } else {
+            pickFilesSingle();
+        }
+    }
+
+    private void pickFilesSingle() {
+        filePicker = new FilePicker(getActivity());
+        filePicker.setFilePickerCallback(this);
+        filePicker.setFolderName(getActivity().getString(R.string.app_name));
+        filePicker.pickFile();
+    }
+
+    public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case WRITE_EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    pickFilesSingle();
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    Utils.getInstance().showToast("Camera/Storage permission Denied");
+                }
+                return;
+            }
+        }
+    }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         // User has picked an image. Transfer it to group owner i.e peer using
         // FileTransferService.
         if (resultCode == getActivity().RESULT_OK) {
-            Uri uri = data.getData();
-                /*
+            if (requestCode == Picker.PICK_FILE) {
+                filePicker.submit(data);
+            } else {
+
+
+                /*Uri uri = data.getData();
+                *//*
                  * get actual file name and size of file, it will be send to socket and recieved at other device.
     	         * File size help in displaying progress dialog actual progress.
-    	         */
-            String selectedfilePath = null;
-            try {
-                selectedfilePath = CommonMethods.getPath(uri,
-                        getActivity());
-
-                Utils.d("Original Selected File Path-> ", selectedfilePath);
-            } catch (Exception e) {
-                // TODO: handle exception
-                e.printStackTrace();
-            }
-            String Extension = "";
-            if (selectedfilePath != null) {
-                File f = new File(selectedfilePath);
-                System.out.println("file name is   ::" + f.getName());
-                Long FileLength = f.length();
-                ActualFilelength = FileLength;
-
-                int i = f.getName().lastIndexOf('.');
-                if (i > 0) {
-                    String extension = f.getName().substring(i + 1);
-                }
+    	         *//*
+                String selectedfilePath = null;
                 try {
-                    Extension = f.getName();
-                    Log.e("Name of File-> ", "" + Extension);
+                    selectedfilePath = CommonMethods.getPath(uri,
+                            getActivity());
+
+                    Utils.d("Original Selected File Path-> ", selectedfilePath);
                 } catch (Exception e) {
                     // TODO: handle exception
                     e.printStackTrace();
                 }
-            } else {
-                CommonMethods.e("", "path is null");
-                return;
-            }
+                String Extension = "";
+                if (selectedfilePath != null) {
+                    File f = new File(selectedfilePath);
+                    System.out.println("file name is   ::" + f.getName());
+                    Long FileLength = f.length();
+                    ActualFilelength = FileLength;
+
+                    int i = f.getName().lastIndexOf('.');
+                    if (i > 0) {
+                        String extension = f.getName().substring(i + 1);
+                    }
+                    try {
+                        Extension = f.getName();
+                        Log.e("Name of File-> ", "" + Extension);
+                    } catch (Exception e) {
+                        // TODO: handle exception
+                        e.printStackTrace();
+                    }
+                } else {
+                    CommonMethods.e("", "path is null");
+                    return;
+                }*/
 
 
-            TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
-            statusText.setText("Sending: " + uri);
-            Log.d(WiFiDirectActivity.TAG, "Intent----------- " + uri);
-            Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
-            serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
-            serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
-                /*
+                /*TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
+                statusText.setText("Sending: " + uri);
+                Log.d(WiFiDirectActivity.TAG, "Intent----------- " + uri);
+                Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
+                serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
+                serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
+                *//*
                  * Choose on which device file has to send weather its server or client
-    	         */
-            String Ip = SharedPreferencesHandler.getStringValues(
-                    getActivity(), getString(R.string.pref_WiFiClientIp));
-            String OwnerIp = SharedPreferencesHandler.getStringValues(
-                    getActivity(), getString(R.string.pref_GroupOwnerAddress));
-            if (OwnerIp != null && OwnerIp.length() > 0) {
-                CommonMethods.e("", "inside the check -- >");
-                // if(!info.groupOwnerAddress.getHostAddress().equals(LocalIp)){
-                String host = null;
-                int sub_port = -1;
+    	         *//*
+                String Ip = SharedPreferencesHandler.getStringValues(
+                        getActivity(), getString(R.string.pref_WiFiClientIp));
+                String OwnerIp = SharedPreferencesHandler.getStringValues(
+                        getActivity(), getString(R.string.pref_GroupOwnerAddress));
+                if (OwnerIp != null && OwnerIp.length() > 0) {
+                    CommonMethods.e("", "inside the check -- >");
+                    // if(!info.groupOwnerAddress.getHostAddress().equals(LocalIp)){
+                    String host = null;
+                    int sub_port = -1;
 
-                String ServerBool = SharedPreferencesHandler.getStringValues(getActivity(), getString(R.string.pref_ServerBoolean));
-                if (ServerBool != null && !ServerBool.equals("") && ServerBool.equalsIgnoreCase("true")) {
+                    String ServerBool = SharedPreferencesHandler.getStringValues(getActivity(), getString(R.string.pref_ServerBoolean));
+                    if (ServerBool != null && !ServerBool.equals("") && ServerBool.equalsIgnoreCase("true")) {
 
-                    //-----------------------------
-                    if (!TextUtils.isEmpty(Ip)) {
+                        //-----------------------------
+                        if (!TextUtils.isEmpty(Ip)) {
+                            CommonMethods.e(
+                                    "in if condition",
+                                    "Sending data to " + Ip);
+                            // Get Client Ip Address and send data
+                            host = Ip;
+                            sub_port = FileTransferService.PORT;
+                            serviceIntent
+                                    .putExtra(
+                                            FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
+                                            Ip);
+                        }
+
+
+                    } else {
                         CommonMethods.e(
-                                "in if condition",
-                                "Sending data to " + Ip);
-                        // Get Client Ip Address and send data
-                        host = Ip;
+                                "in else condition",
+                                "Sending data to " + OwnerIp);
+
+                        FileTransferService.PORT = 8888;
+
+                        host = OwnerIp;
                         sub_port = FileTransferService.PORT;
                         serviceIntent
                                 .putExtra(
                                         FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
-                                        Ip);
+                                        OwnerIp);
                     }
 
 
+                    serviceIntent.putExtra(FileTransferService.Extension, Extension);
+
+                    serviceIntent.putExtra(FileTransferService.Filelength,
+                            ActualFilelength + "");
+                    serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, FileTransferService.PORT);
+                    if (host != null && sub_port != -1) {
+                        CommonMethods.e("Going to intiate service", "service intent for initiating transfer");
+                        showprogress("Sending...");
+                        getActivity().startService(serviceIntent);
+                    } else {
+                        CommonMethods.DisplayToast(getActivity(),
+                                "Host Address not found, Please Re-Connect");
+                        DismissProgressDialog();
+                    }
+
                 } else {
-                    CommonMethods.e(
-                            "in else condition",
-                            "Sending data to " + OwnerIp);
-
-                    FileTransferService.PORT = 8888;
-
-                    host = OwnerIp;
-                    sub_port = FileTransferService.PORT;
-                    serviceIntent
-                            .putExtra(
-                                    FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
-                                    OwnerIp);
-                }
-
-
-                serviceIntent.putExtra(FileTransferService.Extension, Extension);
-
-                serviceIntent.putExtra(FileTransferService.Filelength,
-                        ActualFilelength + "");
-                serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, FileTransferService.PORT);
-                if (host != null && sub_port != -1) {
-                    CommonMethods.e("Going to intiate service", "service intent for initiating transfer");
-                    showprogress("Sending...");
-                    getActivity().startService(serviceIntent);
-                } else {
+                    DismissProgressDialog();
                     CommonMethods.DisplayToast(getActivity(),
                             "Host Address not found, Please Re-Connect");
-                    DismissProgressDialog();
-                }
+                }*/
 
-            } else {
-                DismissProgressDialog();
-                CommonMethods.DisplayToast(getActivity(),
-                        "Host Address not found, Please Re-Connect");
+
             }
         } else {
             CommonMethods.DisplayToast(getActivity(), "Cancelled Request");
@@ -322,7 +385,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
 
             if (info.groupFormed && info.isGroupOwner) {
             /*
-        	 * set shaerdprefrence which remember that device is server.
+             * set shaerdprefrence which remember that device is server.
         	 */
                 SharedPreferencesHandler.setStringValues(getActivity(),
                         getString(R.string.pref_ServerBoolean), "true");
@@ -420,6 +483,80 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
      * the stream.
      */
     static Handler handler;
+
+    @Override
+    public void onFilesChosen(List<ChosenFile> list) {
+        ChosenFile file = list.get(0);
+        String extension = "";
+        int i = list.get(0).getDisplayName().lastIndexOf('.');
+        if (i > 0) {
+            extension = list.get(0).getDisplayName().substring(i + 1);
+        }
+
+        ActualFilelength = file.getSize();
+        ;
+
+        TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
+        statusText.setText("Sending: " + file.getOriginalPath());
+
+        Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
+        serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
+        serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, file.getQueryUri());
+                /*
+                 * Choose on which device file has to send weather its server or client
+    	         */
+        String Ip = SharedPreferencesHandler.getStringValues(
+                getActivity(), getString(R.string.pref_WiFiClientIp));
+        String OwnerIp = SharedPreferencesHandler.getStringValues(
+                getActivity(), getString(R.string.pref_GroupOwnerAddress));
+        if (!TextUtils.isEmpty(OwnerIp) && OwnerIp.length() > 0) {
+            String host = null;
+            int sub_port = -1;
+
+            String ServerBool = SharedPreferencesHandler.getStringValues(getActivity(), getString(R.string.pref_ServerBoolean));
+            if (!TextUtils.isEmpty(ServerBool) && ServerBool.equalsIgnoreCase("true") && !TextUtils.isEmpty(Ip)) {
+                host = Ip;
+                sub_port = FileTransferService.PORT;
+                serviceIntent
+                        .putExtra(
+                                FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
+                                Ip);
+
+            } else {
+                FileTransferService.PORT = 8888;
+                host = OwnerIp;
+                sub_port = FileTransferService.PORT;
+                serviceIntent.putExtra(
+                        FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
+                        OwnerIp);
+            }
+            serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, FileTransferService.PORT);
+
+            serviceIntent.putExtra(FileTransferService.Extension, file.getDisplayName());
+
+            serviceIntent.putExtra(FileTransferService.Filelength,
+                    String.valueOf(ActualFilelength));
+
+            if (host != null && sub_port != -1) {
+                showprogress("Sending...");
+                getActivity().startService(serviceIntent);
+            } else {
+                CommonMethods.DisplayToast(getActivity(),
+                        "Host Address not found, Please Re-Connect");
+                DismissProgressDialog();
+            }
+
+        } else {
+            DismissProgressDialog();
+            CommonMethods.DisplayToast(getActivity(),
+                    "Host Address not found, Please Re-Connect");
+        }
+    }
+
+    @Override
+    public void onError(String s) {
+
+    }
 
     public static class FileServerAsyncTask extends AsyncTask<String, String, String> {
 
@@ -522,7 +659,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                     f.createNewFile();
 
 				/*
-				 * Recieve file length and copy after it
+                 * Recieve file length and copy after it
 				 */
                     this.ReceivedFileLength = obj.getFileLength();
 
@@ -536,7 +673,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                     serverSocket.close();
 
 				/*
-				 * Set file related data and decrypt file in postExecute.
+                 * Set file related data and decrypt file in postExecute.
 				 */
                     this.Extension = obj.getFileName();
                     this.EncryptedFile = f;
@@ -567,23 +704,10 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                     if (mInterstitialAd.isLoaded()) {
                         mInterstitialAd.show();
                     }
-
-                    Intent intent = new Intent();
-                    intent.setAction(Intent.ACTION_VIEW);
-                    intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION); //must for reading data from directory
-                    if (Build.VERSION.SDK_INT >= 24) {
-                        File file = new File(result);
-                        Uri photoURI = FileProvider.getUriForFile(mFilecontext,
-                                anuj.wifidirect.BuildConfig.APPLICATION_ID + ".provider",
-                                file);
-                        intent.setDataAndType(photoURI, "image/*");
-                    } else {
-                        intent.setDataAndType(Uri.parse("file://" + result), "image/*");
-                    }
-                    mFilecontext.startActivity(intent);
+                    openFile(result, mFilecontext);
                 } else if (!TextUtils.isEmpty(result)) {
-            		/*
-					 * To initiate socket again we are intiating async task
+                    /*
+                     * To initiate socket again we are intiating async task
 					 * in this condition.
 					 */
                     FileServerAsyncTask FileServerobj = new
@@ -593,7 +717,6 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                             FileServerobj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new String[]{null});
 
                         } else FileServerobj.execute();
-
                     }
                 }
             }
@@ -612,10 +735,70 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         }
     }
 
+
+    public static void openFile(String stringUrl, Context context) {
+        Uri uri = Uri.parse(stringUrl);
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        if (Build.VERSION.SDK_INT >= 24) {
+            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            Uri fileURI = FileProvider.getUriForFile(context,
+                    anuj.wifidirect.BuildConfig.APPLICATION_ID + ".provider",
+                    new File(stringUrl));
+            uri = fileURI;
+        }
+        if (stringUrl.toString().contains(".doc") || stringUrl.toString().contains(".docx")) {
+            // Word document
+            intent.setDataAndType(uri, "application/msword");
+        } else if (stringUrl.toString().contains(".pdf")) {
+            // PDF file
+            intent.setDataAndType(uri, "application/pdf");
+        } else if (stringUrl.toString().contains(".ppt") || stringUrl.toString().contains(".pptx")) {
+            // Powerpoint file
+            intent.setDataAndType(uri, "application/vnd.ms-powerpoint");
+        } else if (stringUrl.toString().contains(".xls") || stringUrl.toString().contains(".xlsx")) {
+            // Excel file
+            intent.setDataAndType(uri, "application/vnd.ms-excel");
+        } else if (stringUrl.toString().contains(".zip") || stringUrl.toString().contains(".rar")) {
+            // WAV audio file
+            intent.setDataAndType(uri, "application/x-wav");
+        } else if (stringUrl.toString().contains(".rtf")) {
+            // RTF file
+            intent.setDataAndType(uri, "application/rtf");
+        } else if (stringUrl.toString().contains(".wav") || stringUrl.toString().contains(".mp3")) {
+            // WAV audio file
+            intent.setDataAndType(uri, "audio/x-wav");
+        } else if (stringUrl.toString().contains(".gif")) {
+            // GIF file
+            intent.setDataAndType(uri, "image/gif");
+        } else if (stringUrl.toString().contains(".jpg") || stringUrl.toString().contains(".jpeg") || stringUrl.toString().contains(".png")) {
+            // JPG file
+            intent.setDataAndType(uri, "image/jpeg");
+        } else if (stringUrl.toString().contains(".txt")) {
+            // Text file
+            intent.setDataAndType(uri, "text/plain");
+        } else if (stringUrl.toString().contains(".3gp") || stringUrl.toString().contains(".mpg") || stringUrl.toString().contains(".mpeg") || stringUrl.toString().contains(".mpe") || stringUrl.toString().contains(".mp4") || stringUrl.toString().contains(".avi")) {
+            // Video files
+            intent.setDataAndType(uri, "video/*");
+        } else {
+            //if you want you can also define the intent type for any other file
+            //additionally use else clause below, to manage other unknown extensions
+            //in this case, Android will show all applications installed on the device
+            //so you can choose which application to use
+            intent.setDataAndType(uri, "*/*");
+        }
+//        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+
+    }
+
+
     public static boolean copyFile(InputStream inputStream, OutputStream out) {
         long total = 0;
         long test = 0;
         byte buf[] = new byte[FileTransferService.ByteSize];
+        if (buf == null) return false;
+
         int len;
         try {
             while ((len = inputStream.read(buf)) != -1) {
@@ -625,8 +808,6 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                     if (ActualFilelength > 0) {
                         Percentage = (int) ((total * 100) / ActualFilelength);
                     }
-                    // Log.e("Percentage--->>> ", Percentage+"   FileLength" +
-                    // EncryptedFilelength+"    len" + len+"");
                     mProgressDialog.setProgress(Percentage);
                 } catch (Exception e) {
                     // TODO: handle exception
