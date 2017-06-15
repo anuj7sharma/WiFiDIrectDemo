@@ -623,6 +623,8 @@ public class DeviceDetailFragment extends android.support.v4.app.Fragment implem
                     anuj.wifidirect.BuildConfig.APPLICATION_ID + ".provider",
                     new File(stringUrl));
             uri = fileURI;
+        }else{
+            uri = Uri.parse("file://" + uri.getPath());
         }
         if (stringUrl.toString().contains(".doc") || stringUrl.toString().contains(".docx")) {
             // Word document

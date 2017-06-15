@@ -13,6 +13,9 @@ android {
         // Enabling multidex support.
         multiDexEnabled true
     }
+    dexOptions {
+        javaMaxHeapSize "4g"
+    }
     buildTypes {
         release {
             minifyEnabled false
@@ -26,6 +29,7 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
+    //noinspection GradleCompatible
     compile 'com.android.support:multidex:1.0.1'
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:design:25.3.1'
