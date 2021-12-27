@@ -16,6 +16,3 @@ You can find APK file to test the functionality.
 https://play.google.com/store/apps/details?id=anuj.wifidirect
 
 Take a look on this code and surely you will understand, in case of an kind of problem just put your comment and let me know about.
-
-My Email id: anujs1991@gmail.com
-
